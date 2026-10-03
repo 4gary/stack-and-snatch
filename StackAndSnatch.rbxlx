@@ -4347,6 +4347,7 @@ function Plots.removeOwner(owner)
 	if owner.player then
 		Plots.byPlayer[owner.player] = nil
 	end
+	local freed = owner.plot
 	if owner.plot then
 		clearPlot(owner.plot)
 		owner.plot = nil
@@ -4354,6 +4355,18 @@ function Plots.removeOwner(owner)
 	if owner.host then
 		S.Towers.destroyHost(owner.host)
 		owner.host = nil
+	end
+	-- Hand the free pad to someone who joined while every pad was taken.
+	if freed then
+		for _, waiting in Plots.byKey do
+			if waiting.player and not waiting.plot then
+				assignPlot(waiting, freed)
+				Plots.sendHome(waiting)
+				S.Sync.markDirty(waiting)
+				S.Sync.notify(waiting, "A base pad opened up - it's yours now!", "good", "Bricklebee")
+				break
+			end
+		end
 	end
 end
 
@@ -5156,6 +5169,10 @@ local function arrive(carrier)
 		table.remove(from.data.transit, i)
 	end
 	local entry = { u = c.entry.u, id = c.entry.id, m = c.entry.m }
+	if carrier.data.held then
+		-- never overwrite a creature: whatever was in hand goes to the Box
+		table.insert(carrier.data.box, carrier.data.held)
+	end
 	carrier.data.held = entry
 	S.Stacking.attachHeld(carrier)
 	S.Progress.onCreatureGained(carrier, entry, "snatch")
@@ -5184,6 +5201,18 @@ function Snatch.onCarrierLost(owner, why: string)
 	if owner.carry then
 		Snatch.cancelCarry(owner, "Oops, you " .. why .. "! The creature hopped back home.")
 	end
+	-- Died mid-snatch: just end the attempt (the tower is unlocked, nothing moves).
+	local session = owner.session
+	if session and session.kind == "snatch" then
+		owner.session = nil
+		if session.tween then
+			session.tween:Cancel()
+		end
+		if session.target and session.target.snatchLock and session.target.snatchLock.snatcher == owner then
+			session.target.snatchLock = nil
+		end
+		S.Sync.markDirty(owner)
+	end
 end
 
 -- Snatch sessions ---------------------------------------------------------------------
@@ -5204,6 +5233,10 @@ local function endSession(owner)
 		return nil
 	end
 	owner.session = nil
+	if session.tween then
+		session.tween:Cancel()
+		session.tween = nil
+	end
 	if session.target and session.target.snatchLock and session.target.snatchLock.snatcher == owner then
 		session.target.snatchLock = nil
 	end
@@ -5368,13 +5401,15 @@ function Snatch.request(owner, plotIndex: any)
 	-- Hop up the pegs.
 	local stand = S.Map.snatchStandCF(host.origin, S.Towers.topHeight(host))
 	hrp.Anchored = true
-	TweenService:Create(hrp, TweenInfo.new(SN.HopUpTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = stand }):Play()
+	session.tween = TweenService:Create(hrp, TweenInfo.new(SN.HopUpTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = stand })
+	session.tween:Play()
 	S.Sync.effectAll({ kind = "Hop", userId = owner.userId })
 
 	task.delay(SN.HopUpTime, function()
 		if owner.session ~= session then
 			return
 		end
+		session.tween = nil
 		character:PivotTo(stand)
 		session.start = Util.now()
 		snatchStart:FireClient(owner.player, session.id, {
@@ -5665,7 +5700,8 @@ function Stacking.newEntry(creatureId: string, mutation: string?)
 end
 
 function Stacking.handsFree(owner): boolean
-	return owner.data.held == nil and owner.carry == nil
+	local snatching = owner.session ~= nil and owner.session.kind == "snatch"
+	return owner.data.held == nil and owner.carry == nil and not snatching
 end
 
 -- The creature model riding above your head --------------------------------------
@@ -5927,6 +5963,10 @@ function Stacking.towerAction(owner, action: any, uid: any)
 		end
 		if i then
 			data.cushions[slot] = plain(table.remove(data.box, i))
+			if owner.ground then
+				owner.ground[uid] = nil
+			end
+			S.Towers.renderGround(owner)
 			S.Towers.renderCushions(owner)
 			S.Plots.refreshPlot(owner)
 			S.Sync.markDirty(owner)

@@ -325,6 +325,7 @@ function Plots.removeOwner(owner)
 	if owner.player then
 		Plots.byPlayer[owner.player] = nil
 	end
+	local freed = owner.plot
 	if owner.plot then
 		clearPlot(owner.plot)
 		owner.plot = nil
@@ -332,6 +333,18 @@ function Plots.removeOwner(owner)
 	if owner.host then
 		S.Towers.destroyHost(owner.host)
 		owner.host = nil
+	end
+	-- Hand the free pad to someone who joined while every pad was taken.
+	if freed then
+		for _, waiting in Plots.byKey do
+			if waiting.player and not waiting.plot then
+				assignPlot(waiting, freed)
+				Plots.sendHome(waiting)
+				S.Sync.markDirty(waiting)
+				S.Sync.notify(waiting, "A base pad opened up - it's yours now!", "good", "Bricklebee")
+				break
+			end
+		end
 	end
 end
 

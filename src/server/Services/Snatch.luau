@@ -215,6 +215,10 @@ local function arrive(carrier)
 		table.remove(from.data.transit, i)
 	end
 	local entry = { u = c.entry.u, id = c.entry.id, m = c.entry.m }
+	if carrier.data.held then
+		-- never overwrite a creature: whatever was in hand goes to the Box
+		table.insert(carrier.data.box, carrier.data.held)
+	end
 	carrier.data.held = entry
 	S.Stacking.attachHeld(carrier)
 	S.Progress.onCreatureGained(carrier, entry, "snatch")
@@ -243,6 +247,18 @@ function Snatch.onCarrierLost(owner, why: string)
 	if owner.carry then
 		Snatch.cancelCarry(owner, "Oops, you " .. why .. "! The creature hopped back home.")
 	end
+	-- Died mid-snatch: just end the attempt (the tower is unlocked, nothing moves).
+	local session = owner.session
+	if session and session.kind == "snatch" then
+		owner.session = nil
+		if session.tween then
+			session.tween:Cancel()
+		end
+		if session.target and session.target.snatchLock and session.target.snatchLock.snatcher == owner then
+			session.target.snatchLock = nil
+		end
+		S.Sync.markDirty(owner)
+	end
 end
 
 -- Snatch sessions ---------------------------------------------------------------------
@@ -263,6 +279,10 @@ local function endSession(owner)
 		return nil
 	end
 	owner.session = nil
+	if session.tween then
+		session.tween:Cancel()
+		session.tween = nil
+	end
 	if session.target and session.target.snatchLock and session.target.snatchLock.snatcher == owner then
 		session.target.snatchLock = nil
 	end
@@ -427,13 +447,15 @@ function Snatch.request(owner, plotIndex: any)
 	-- Hop up the pegs.
 	local stand = S.Map.snatchStandCF(host.origin, S.Towers.topHeight(host))
 	hrp.Anchored = true
-	TweenService:Create(hrp, TweenInfo.new(SN.HopUpTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = stand }):Play()
+	session.tween = TweenService:Create(hrp, TweenInfo.new(SN.HopUpTime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = stand })
+	session.tween:Play()
 	S.Sync.effectAll({ kind = "Hop", userId = owner.userId })
 
 	task.delay(SN.HopUpTime, function()
 		if owner.session ~= session then
 			return
 		end
+		session.tween = nil
 		character:PivotTo(stand)
 		session.start = Util.now()
 		snatchStart:FireClient(owner.player, session.id, {

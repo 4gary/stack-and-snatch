@@ -36,7 +36,8 @@ function Stacking.newEntry(creatureId: string, mutation: string?)
 end
 
 function Stacking.handsFree(owner): boolean
-	return owner.data.held == nil and owner.carry == nil
+	local snatching = owner.session ~= nil and owner.session.kind == "snatch"
+	return owner.data.held == nil and owner.carry == nil and not snatching
 end
 
 -- The creature model riding above your head --------------------------------------
@@ -298,6 +299,10 @@ function Stacking.towerAction(owner, action: any, uid: any)
 		end
 		if i then
 			data.cushions[slot] = plain(table.remove(data.box, i))
+			if owner.ground then
+				owner.ground[uid] = nil
+			end
+			S.Towers.renderGround(owner)
 			S.Towers.renderCushions(owner)
 			S.Plots.refreshPlot(owner)
 			S.Sync.markDirty(owner)
