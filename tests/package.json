@@ -1,0 +1,12 @@
+{
+  "name": "stack-and-snatch-tests",
+  "private": true,
+  "type": "module",
+  "description": "Runs the pure shared Luau modules (wobble rules, economy, formatting) in a Luau VM outside Roblox.",
+  "scripts": {
+    "test": "node run.mjs"
+  },
+  "dependencies": {
+    "luau-web": "^1.4.0"
+  }
+}

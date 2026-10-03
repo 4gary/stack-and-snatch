@@ -1,0 +1,50 @@
+{
+  "name": "StackAndSnatch",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "$properties": {
+        "CameraMaxZoomDistance": 220,
+        "CharacterWalkSpeed": 18,
+        "CharacterJumpPower": 50,
+        "CharacterUseJumpPower": true
+      },
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "Gravity": 196.2,
+        "FallenPartsDestroyHeight": -200,
+        "StreamingEnabled": false
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "ClockTime": 13.5,
+        "Brightness": 2.6,
+        "GlobalShadows": true,
+        "Ambient": [0.55, 0.5, 0.6],
+        "OutdoorAmbient": [0.7, 0.66, 0.75]
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}

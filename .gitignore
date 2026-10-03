@@ -1,0 +1,8 @@
+# Rojo build output is committed on purpose (StackAndSnatch.rbxlx) so it can be
+# downloaded and opened directly. Everything else here is local noise.
+node_modules/
+*.rbxl.lock
+*.rbxlx.lock
+sourcemap.json
+roblox.yml
+.DS_Store
