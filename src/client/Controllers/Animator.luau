@@ -23,6 +23,7 @@ Animator.calm = false
 
 local seen = {} -- [model] = first time this client saw it (for drop-in animation)
 local initialized = false
+local lastWarn = 0
 
 local function rootOf(model: Instance): BasePart?
 	return model:FindFirstChild("Root") :: BasePart?
@@ -172,7 +173,8 @@ function Animator.start()
 				animateTower(practice.Tower, practice, now, camPos)
 			end
 		end)
-		if not ok then
+		if not ok and os.clock() - lastWarn > 5 then
+			lastWarn = os.clock()
 			warn("[Animator]", err)
 		end
 	end)

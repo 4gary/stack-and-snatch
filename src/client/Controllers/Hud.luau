@@ -56,7 +56,7 @@ local function buildCoins(parent)
 		Parent = parent,
 	})
 	ui.coins = Kit.label({
-		Text = "🪙 0",
+		Text = "💰 0",
 		TextSize = 34,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		Size = UDim2.new(1, 0, 0, 36),
@@ -103,7 +103,7 @@ end
 local function buildTowerCard(parent)
 	local card = Kit.panel({
 		Name = "TowerCard",
-		Size = UDim2.fromOffset(270, 112),
+		Size = UDim2.fromOffset(270, 126),
 		Position = UDim2.fromOffset(12, 10),
 		Parent = parent,
 	})
@@ -128,7 +128,7 @@ local function buildTowerCard(parent)
 		Name = "Chips",
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(270, 140),
-		Position = UDim2.fromOffset(12, 128),
+		Position = UDim2.fromOffset(12, 142),
 		Parent = parent,
 	})
 	Kit.list(nil, 4).Parent = ui.chips
@@ -378,7 +378,7 @@ function Hud.boop()
 end
 
 local function updateCoins(data)
-	ui.coins.Text = "🪙 " .. Format.number(data.coins)
+	ui.coins.Text = "💰 " .. Format.number(data.coins)
 	local napping = data.protection and data.protection.napping
 	ui.rate.Text = "+" .. Format.number(data.rate) .. "/s" .. (napping and "  💤 napping (50%)" or "")
 end
@@ -402,7 +402,7 @@ local function updateProtection(data)
 		add("🛡️ Bubble Shield " .. Format.time(p.shieldLeft), Color3.fromRGB(190, 235, 255))
 	end
 	if p.arrival then
-		local text = p.arrivalLeft > 0 and ("🫧 Arrival Bubble " .. Format.time(p.arrivalLeft)) or "🫧 Arrival Bubble (until you move)"
+		local text = p.arrivalLeft > 0 and ("💠 Arrival Bubble " .. Format.time(p.arrivalLeft)) or "💠 Arrival Bubble (until you move)"
 		add(text, Color3.fromRGB(255, 215, 240))
 	end
 	if p.newStacker then
@@ -412,7 +412,7 @@ local function updateProtection(data)
 		add("💤 Nap Mode (move to wake)", Color3.fromRGB(220, 210, 255))
 	end
 	if p.ruffledLeft > 0 then
-		add("🪶 Ruffled Feathers " .. Format.time(p.ruffledLeft), Color3.fromRGB(255, 235, 190))
+		add("🐤 Ruffled Feathers " .. Format.time(p.ruffledLeft), Color3.fromRGB(255, 235, 190))
 	end
 	if p.devNoProtection then
 		add("🛠️ Dev: protections off", Color3.fromRGB(255, 200, 200))
@@ -471,7 +471,8 @@ local function updateHeld(data)
 	ui.heldTitle.TextColor3 = color:Lerp(Kit.Colors.Text, 0.45)
 	local onPad = State.onOwnPad()
 	local full = #data.tower >= Economy.maxSlots(data)
-	if data.toppling then
+	local toppling = State.myTowerToppling()
+	if toppling then
 		ui.heldHint.Text = "Your tower is bouncing back..."
 	elseif full then
 		ui.heldHint.Text = "Tower full! Upgrade your base or Box it."
@@ -480,7 +481,7 @@ local function updateHeld(data)
 	else
 		ui.heldHint.Text = "Walk to your base pad to stack it."
 	end
-	Kit.setButtonEnabled(ui.drop, onPad and not full and not data.toppling, Kit.Colors.Green)
+	Kit.setButtonEnabled(ui.drop, onPad and not full and not toppling, Kit.Colors.Green)
 end
 
 local function updateServerList()
@@ -516,7 +517,7 @@ local function updateServerList()
 		elseif string.find(row.status, "💤", 1, true) then
 			icon = " 💤"
 		elseif row.status ~= "" then
-			icon = " 🫧"
+			icon = " 💠"
 		end
 		label.Text = string.format("%s%s - %d tall%s", row.mine and "⭐ " or "", row.name, row.height, icon)
 		label.Visible = true

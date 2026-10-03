@@ -170,20 +170,23 @@ function Minigames.startSnatch(sessionId: string, params)
 			snatchConn = nil
 		end
 		ui.title.Text = success and "FWIP!" or "Wheeee!"
-		C.Sound.play(success and "Snatch" or "Topple")
 		Remotes.get("SnatchResult"):FireServer(sessionId, success, { steady = steady, outside = outside })
 		task.delay(0.6, function()
 			ui.overlay.Visible = false
 		end)
 	end
 
-	local inputs = {}
-	table.insert(inputs, UserInputService.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
+	local holdInput: InputObject? = nil -- the press (mouse / finger / button) doing the pulling
+	local function isHoldInput(input: InputObject): boolean
+		return input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch
 			or input.KeyCode == Enum.KeyCode.ButtonR2
 			or input.KeyCode == Enum.KeyCode.ButtonA
-		then
+	end
+	local inputs = {}
+	table.insert(inputs, UserInputService.InputBegan:Connect(function(input)
+		if holdInput == nil and isHoldInput(input) then
+			holdInput = input
 			holding = true
 			local pos = input.UserInputType == Enum.UserInputType.Touch and Vector2.new(input.Position.X, input.Position.Y) or pointerPosition()
 			anchor = pos - correction
@@ -191,30 +194,33 @@ function Minigames.startSnatch(sessionId: string, params)
 		end
 	end))
 	table.insert(inputs, UserInputService.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			lastPointer = Vector2.new(input.Position.X, input.Position.Y)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			if holdInput and holdInput.UserInputType == Enum.UserInputType.MouseButton1 then
+				lastPointer = pointerPosition()
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			if input == holdInput then
+				lastPointer = Vector2.new(input.Position.X, input.Position.Y)
+			end
 		elseif input.KeyCode == Enum.KeyCode.Thumbstick1 then
 			stickOffset = Vector2.new(input.Position.X, -input.Position.Y)
 		end
 	end))
 	table.insert(inputs, UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-			or input.KeyCode == Enum.KeyCode.ButtonR2
-			or input.KeyCode == Enum.KeyCode.ButtonA
-		then
+		if input == holdInput or (holdInput and input.UserInputType == holdInput.UserInputType and input.KeyCode == holdInput.KeyCode and input.UserInputType ~= Enum.UserInputType.Touch) then
+			holdInput = nil
 			holding = false
 		end
 	end))
 
-	snatchConn = RunService.RenderStepped:Connect(function(dt)
+	local function step(dt: number)
 		local t = os.clock() - start
 		-- The dot wanders: smooth noise plus a slow drift that keeps growing.
 		driftAngle += dt * 0.7
 		local wander = Vector2.new(math.noise(t * 0.9, seedX), math.noise(t * 0.9, seedY)) * ringPx * params.drift * 2.4
 		local slide = Vector2.new(math.cos(driftAngle), math.sin(driftAngle)) * ringPx * params.drift * 0.45 * t
 		if holding then
-			if UserInputService.MouseEnabled and not UserInputService.TouchEnabled then
+			if holdInput and holdInput.UserInputType == Enum.UserInputType.MouseButton1 then
 				lastPointer = pointerPosition()
 			end
 			correction = (lastPointer - anchor)
@@ -241,6 +247,13 @@ function Minigames.startSnatch(sessionId: string, params)
 		if steady >= params.required then
 			finish(true)
 		elseif outside >= params.maxOutside or t >= params.limit then
+			finish(false)
+		end
+	end
+	snatchConn = RunService.RenderStepped:Connect(function(dt)
+		local ok, err = pcall(step, dt)
+		if not ok then
+			warn("[Minigames] snatch error:", err)
 			finish(false)
 		end
 		if done then
@@ -351,7 +364,10 @@ function Minigames.startScoop(sessionId: string, params)
 
 	clickConn = ui.button.Activated:Connect(finish)
 	keyConn = UserInputService.InputBegan:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+		if UserInputService:GetFocusedTextBox() then
+			return -- typing in chat or a text box
+		end
+		if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX then
 			finish()
 		end
 	end)

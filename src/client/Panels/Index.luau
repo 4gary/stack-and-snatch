@@ -152,7 +152,7 @@ function Index.refresh(data)
 			local marks = ""
 			for _, m in Mutations.Order do
 				if page[m] then
-					marks ..= (m == "GoldenToast" and "🟡" or m == "Glittery" and "✨" or "🌈")
+					marks ..= (m == "GoldenToast" and "⭐" or m == "Glittery" and "✨" or "🌈")
 				end
 			end
 			card.dots.Text = marks

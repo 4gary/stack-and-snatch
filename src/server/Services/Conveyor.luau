@@ -65,7 +65,7 @@ local function makeLabel(model: Model, def, mutation: string?, price: number)
 	end
 	line(name, Color3.fromRGB(255, 255, 255), 0.38, 1)
 	line(rarity.Badge .. " " .. rarity.Name .. " · " .. Format.number(def.Rate * Mutations.multiplier(mutation)) .. "/s", rarity.Color, 0.3, 2)
-	line("🪙 " .. Format.number(price), Color3.fromRGB(255, 225, 90), 0.32, 3)
+	line("💰 " .. Format.number(price), Color3.fromRGB(255, 225, 90), 0.32, 3)
 	gui.Parent = model
 end
 

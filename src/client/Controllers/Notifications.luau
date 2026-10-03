@@ -77,7 +77,7 @@ function Notifications.show(payload)
 	end
 	if #banners > MAX then
 		table.sort(banners, function(a, b)
-			return a.LayoutOrder > b.LayoutOrder
+			return a.LayoutOrder < b.LayoutOrder -- newest first
 		end)
 		for i = MAX + 1, #banners do
 			banners[i]:Destroy()

@@ -102,7 +102,7 @@ function Shop.refresh(data)
 	ui.now.Text = "Now: " .. describe(selected, current)
 	if nextLevel then
 		ui.next.Text = "Next: " .. describe(selected, nextLevel)
-		ui.buy.Text = "Upgrade · 🪙" .. Format.number(nextLevel.Cost)
+		ui.buy.Text = "Upgrade · 💰" .. Format.number(nextLevel.Cost)
 		Kit.setButtonEnabled(ui.buy, data.coins >= nextLevel.Cost, Kit.Colors.Green)
 	else
 		ui.next.Text = "Maxed out!"

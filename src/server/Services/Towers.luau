@@ -160,6 +160,7 @@ function Towers.topple(host, onDone: (() -> ())?)
 			host.attributeTarget:SetAttribute("Toppling", false)
 		end
 		Towers.refresh(host)
+		S.Sync.markDirty(S.Plots.byKey[host.key]) -- clears the owner's "toppling" flag
 		S.Sync.effectAll({ kind = "Restack", key = host.key, pos = host.origin.Position })
 		if onDone then
 			onDone()

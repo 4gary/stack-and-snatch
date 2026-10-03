@@ -90,7 +90,7 @@ Config.Pendulum = {
 	BasePeriod = 2.6,
 	MinPeriod = 1.2,
 	PeriodShrinkPerLayer = 0.03,
-	TimestampTolerance = 0.5, -- how far a reported drop time may be from server time
+	TimestampTolerance = 0.8, -- how far a reported drop time may be from server time
 }
 
 -- Economy ----------------------------------------------------------------------
@@ -2238,7 +2238,7 @@ local function makeLabel(model: Model, def, mutation: string?, price: number)
 	end
 	line(name, Color3.fromRGB(255, 255, 255), 0.38, 1)
 	line(rarity.Badge .. " " .. rarity.Name .. " · " .. Format.number(def.Rate * Mutations.multiplier(mutation)) .. "/s", rarity.Color, 0.3, 2)
-	line("🪙 " .. Format.number(price), Color3.fromRGB(255, 225, 90), 0.32, 3)
+	line("💰 " .. Format.number(price), Color3.fromRGB(255, 225, 90), 0.32, 3)
 	gui.Parent = model
 end
 
@@ -4692,13 +4692,13 @@ function Protection.statusText(owner)
 	if st.shieldLeft > 0 then
 		return "🛡️ Bubble Shield " .. Format.time(st.shieldLeft), true, "Shield"
 	elseif st.arrival then
-		return "🫧 Arrival Bubble", true, "Arrival"
+		return "💠 Arrival Bubble", true, "Arrival"
 	elseif st.newStacker then
 		return "🌱 New Stacker", true, "NewStacker"
 	elseif st.napping then
 		return "💤 Napping", true, "Nap"
 	elseif st.ruffledLeft > 0 then
-		return "🪶 Ruffled Feathers " .. Format.time(st.ruffledLeft), true, "Ruffled"
+		return "🐤 Ruffled Feathers " .. Format.time(st.ruffledLeft), true, "Ruffled"
 	end
 	return "", false, nil
 end
@@ -6373,6 +6373,7 @@ function Towers.topple(host, onDone: (() -> ())?)
 			host.attributeTarget:SetAttribute("Toppling", false)
 		end
 		Towers.refresh(host)
+		S.Sync.markDirty(S.Plots.byKey[host.key]) -- clears the owner's "toppling" flag
 		S.Sync.effectAll({ kind = "Restack", key = host.key, pos = host.origin.Position })
 		if onDone then
 			onDone()
@@ -6690,6 +6691,7 @@ Animator.calm = false
 
 local seen = {} -- [model] = first time this client saw it (for drop-in animation)
 local initialized = false
+local lastWarn = 0
 
 local function rootOf(model: Instance): BasePart?
 	return model:FindFirstChild("Root") :: BasePart?
@@ -6839,7 +6841,8 @@ function Animator.start()
 				animateTower(practice.Tower, practice, now, camPos)
 			end
 		end)
-		if not ok then
+		if not ok and os.clock() - lastWarn > 5 then
+			lastWarn = os.clock()
 			warn("[Animator]", err)
 		end
 	end)
@@ -6944,7 +6947,7 @@ local function build()
 		Name = "Dialog",
 		Size = UDim2.fromOffset(420, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.fromOffset(12, 280),
+		Position = UDim2.fromOffset(12, 290),
 		BackgroundColor3 = Color3.fromRGB(255, 250, 235),
 		Visible = false,
 		Parent = Root.hud,
@@ -7557,7 +7560,7 @@ local function buildCoins(parent)
 		Parent = parent,
 	})
 	ui.coins = Kit.label({
-		Text = "🪙 0",
+		Text = "💰 0",
 		TextSize = 34,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		Size = UDim2.new(1, 0, 0, 36),
@@ -7604,7 +7607,7 @@ end
 local function buildTowerCard(parent)
 	local card = Kit.panel({
 		Name = "TowerCard",
-		Size = UDim2.fromOffset(270, 112),
+		Size = UDim2.fromOffset(270, 126),
 		Position = UDim2.fromOffset(12, 10),
 		Parent = parent,
 	})
@@ -7629,7 +7632,7 @@ local function buildTowerCard(parent)
 		Name = "Chips",
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(270, 140),
-		Position = UDim2.fromOffset(12, 128),
+		Position = UDim2.fromOffset(12, 142),
 		Parent = parent,
 	})
 	Kit.list(nil, 4).Parent = ui.chips
@@ -7879,7 +7882,7 @@ function Hud.boop()
 end
 
 local function updateCoins(data)
-	ui.coins.Text = "🪙 " .. Format.number(data.coins)
+	ui.coins.Text = "💰 " .. Format.number(data.coins)
 	local napping = data.protection and data.protection.napping
 	ui.rate.Text = "+" .. Format.number(data.rate) .. "/s" .. (napping and "  💤 napping (50%)" or "")
 end
@@ -7903,7 +7906,7 @@ local function updateProtection(data)
 		add("🛡️ Bubble Shield " .. Format.time(p.shieldLeft), Color3.fromRGB(190, 235, 255))
 	end
 	if p.arrival then
-		local text = p.arrivalLeft > 0 and ("🫧 Arrival Bubble " .. Format.time(p.arrivalLeft)) or "🫧 Arrival Bubble (until you move)"
+		local text = p.arrivalLeft > 0 and ("💠 Arrival Bubble " .. Format.time(p.arrivalLeft)) or "💠 Arrival Bubble (until you move)"
 		add(text, Color3.fromRGB(255, 215, 240))
 	end
 	if p.newStacker then
@@ -7913,7 +7916,7 @@ local function updateProtection(data)
 		add("💤 Nap Mode (move to wake)", Color3.fromRGB(220, 210, 255))
 	end
 	if p.ruffledLeft > 0 then
-		add("🪶 Ruffled Feathers " .. Format.time(p.ruffledLeft), Color3.fromRGB(255, 235, 190))
+		add("🐤 Ruffled Feathers " .. Format.time(p.ruffledLeft), Color3.fromRGB(255, 235, 190))
 	end
 	if p.devNoProtection then
 		add("🛠️ Dev: protections off", Color3.fromRGB(255, 200, 200))
@@ -7972,7 +7975,8 @@ local function updateHeld(data)
 	ui.heldTitle.TextColor3 = color:Lerp(Kit.Colors.Text, 0.45)
 	local onPad = State.onOwnPad()
 	local full = #data.tower >= Economy.maxSlots(data)
-	if data.toppling then
+	local toppling = State.myTowerToppling()
+	if toppling then
 		ui.heldHint.Text = "Your tower is bouncing back..."
 	elseif full then
 		ui.heldHint.Text = "Tower full! Upgrade your base or Box it."
@@ -7981,7 +7985,7 @@ local function updateHeld(data)
 	else
 		ui.heldHint.Text = "Walk to your base pad to stack it."
 	end
-	Kit.setButtonEnabled(ui.drop, onPad and not full and not data.toppling, Kit.Colors.Green)
+	Kit.setButtonEnabled(ui.drop, onPad and not full and not toppling, Kit.Colors.Green)
 end
 
 local function updateServerList()
@@ -8017,7 +8021,7 @@ local function updateServerList()
 		elseif string.find(row.status, "💤", 1, true) then
 			icon = " 💤"
 		elseif row.status ~= "" then
-			icon = " 🫧"
+			icon = " 💠"
 		end
 		label.Text = string.format("%s%s - %d tall%s", row.mine and "⭐ " or "", row.name, row.height, icon)
 		label.Visible = true
@@ -8286,20 +8290,23 @@ function Minigames.startSnatch(sessionId: string, params)
 			snatchConn = nil
 		end
 		ui.title.Text = success and "FWIP!" or "Wheeee!"
-		C.Sound.play(success and "Snatch" or "Topple")
 		Remotes.get("SnatchResult"):FireServer(sessionId, success, { steady = steady, outside = outside })
 		task.delay(0.6, function()
 			ui.overlay.Visible = false
 		end)
 	end
 
-	local inputs = {}
-	table.insert(inputs, UserInputService.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
+	local holdInput: InputObject? = nil -- the press (mouse / finger / button) doing the pulling
+	local function isHoldInput(input: InputObject): boolean
+		return input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch
 			or input.KeyCode == Enum.KeyCode.ButtonR2
 			or input.KeyCode == Enum.KeyCode.ButtonA
-		then
+	end
+	local inputs = {}
+	table.insert(inputs, UserInputService.InputBegan:Connect(function(input)
+		if holdInput == nil and isHoldInput(input) then
+			holdInput = input
 			holding = true
 			local pos = input.UserInputType == Enum.UserInputType.Touch and Vector2.new(input.Position.X, input.Position.Y) or pointerPosition()
 			anchor = pos - correction
@@ -8307,30 +8314,33 @@ function Minigames.startSnatch(sessionId: string, params)
 		end
 	end))
 	table.insert(inputs, UserInputService.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.Touch then
-			lastPointer = Vector2.new(input.Position.X, input.Position.Y)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			if holdInput and holdInput.UserInputType == Enum.UserInputType.MouseButton1 then
+				lastPointer = pointerPosition()
+			end
+		elseif input.UserInputType == Enum.UserInputType.Touch then
+			if input == holdInput then
+				lastPointer = Vector2.new(input.Position.X, input.Position.Y)
+			end
 		elseif input.KeyCode == Enum.KeyCode.Thumbstick1 then
 			stickOffset = Vector2.new(input.Position.X, -input.Position.Y)
 		end
 	end))
 	table.insert(inputs, UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-			or input.KeyCode == Enum.KeyCode.ButtonR2
-			or input.KeyCode == Enum.KeyCode.ButtonA
-		then
+		if input == holdInput or (holdInput and input.UserInputType == holdInput.UserInputType and input.KeyCode == holdInput.KeyCode and input.UserInputType ~= Enum.UserInputType.Touch) then
+			holdInput = nil
 			holding = false
 		end
 	end))
 
-	snatchConn = RunService.RenderStepped:Connect(function(dt)
+	local function step(dt: number)
 		local t = os.clock() - start
 		-- The dot wanders: smooth noise plus a slow drift that keeps growing.
 		driftAngle += dt * 0.7
 		local wander = Vector2.new(math.noise(t * 0.9, seedX), math.noise(t * 0.9, seedY)) * ringPx * params.drift * 2.4
 		local slide = Vector2.new(math.cos(driftAngle), math.sin(driftAngle)) * ringPx * params.drift * 0.45 * t
 		if holding then
-			if UserInputService.MouseEnabled and not UserInputService.TouchEnabled then
+			if holdInput and holdInput.UserInputType == Enum.UserInputType.MouseButton1 then
 				lastPointer = pointerPosition()
 			end
 			correction = (lastPointer - anchor)
@@ -8357,6 +8367,13 @@ function Minigames.startSnatch(sessionId: string, params)
 		if steady >= params.required then
 			finish(true)
 		elseif outside >= params.maxOutside or t >= params.limit then
+			finish(false)
+		end
+	end
+	snatchConn = RunService.RenderStepped:Connect(function(dt)
+		local ok, err = pcall(step, dt)
+		if not ok then
+			warn("[Minigames] snatch error:", err)
 			finish(false)
 		end
 		if done then
@@ -8467,7 +8484,10 @@ function Minigames.startScoop(sessionId: string, params)
 
 	clickConn = ui.button.Activated:Connect(finish)
 	keyConn = UserInputService.InputBegan:Connect(function(input)
-		if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonA then
+		if UserInputService:GetFocusedTextBox() then
+			return -- typing in chat or a text box
+		end
+		if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonX then
 			finish()
 		end
 	end)
@@ -8584,7 +8604,7 @@ function Notifications.show(payload)
 	end
 	if #banners > MAX then
 		table.sort(banners, function(a, b)
-			return a.LayoutOrder > b.LayoutOrder
+			return a.LayoutOrder < b.LayoutOrder -- newest first
 		end)
 		for i = MAX + 1, #banners do
 			banners[i]:Destroy()
@@ -8742,6 +8762,7 @@ local ghostKey = nil
 local target: BasePart? = nil
 local active = false
 local lastDrop = 0
+local lastWarn = 0
 
 local function clearGhost()
 	if ghost then
@@ -8776,7 +8797,7 @@ local function canPlace(data): boolean
 	return data ~= nil
 		and data.held ~= nil
 		and data.carrying == nil
-		and not data.toppling
+		and not C.State.myTowerToppling()
 		and not data.inSession
 		and #data.tower < Economy.maxSlots(data)
 		and State.onOwnPad()
@@ -8808,7 +8829,7 @@ local function setActive(on: boolean)
 				return Enum.ContextActionResult.Sink
 			end
 			return Enum.ContextActionResult.Pass
-		end, false, Enum.KeyCode.Q, Enum.KeyCode.ButtonX)
+		end, false, Enum.KeyCode.Q, Enum.KeyCode.ButtonR1)
 	else
 		ContextActionService:UnbindAction("StackDrop")
 		clearGhost()
@@ -8870,7 +8891,10 @@ function Placement.start()
 	RunService.RenderStepped:Connect(function()
 		local ok, err = pcall(update)
 		if not ok then
-			warn("[Placement]", err)
+			if os.clock() - lastWarn > 5 then
+				lastWarn = os.clock()
+				warn("[Placement]", err)
+			end
 			setActive(false)
 		end
 	end)
@@ -8943,7 +8967,7 @@ local function onConveyorItem(model: Instance)
 		return
 	end
 	local price = model:GetAttribute("Price") or 0
-	local p = prompt(root, "Buy 🪙" .. Format.number(price), creatureName(model), Config.Conveyor.BuyDistance - 2)
+	local p = prompt(root, "Buy 💰" .. Format.number(price), creatureName(model), Config.Conveyor.BuyDistance - 2)
 	p.Triggered:Connect(function()
 		Remotes.get("BuyConveyor"):FireServer(model:GetAttribute("Uid"))
 	end)
@@ -8970,6 +8994,7 @@ local function onPegs(pegs: BasePart)
 	local index = pegs:GetAttribute("PlotIndex") or 0
 	local p = prompt(pegs, practice and "Practice Snatch" or "Snatch!", practice and "Sneaky Pete's tower" or "", Config.Snatch.PromptDistance)
 	p.HoldDuration = 0.25
+	p.Exclusivity = Enum.ProximityPromptExclusivity.AlwaysShow
 	p.Triggered:Connect(function()
 		if C.Minigames.isBusy() then
 			return
@@ -9066,7 +9091,7 @@ local talkIndex = {}
 
 local function onStall(part: BasePart)
 	local action = part:GetAttribute("Action") or ""
-	local p = prompt(part, part:GetAttribute("PromptText") or "Talk", part:GetAttribute("NpcName") or "", 12)
+	local p = prompt(part, part:GetAttribute("PromptText") or "Talk", part:GetAttribute("NpcName") or "", 8)
 	p.Triggered:Connect(function()
 		local kind, arg = string.match(action, "^(%a+):?(%a*)$")
 		if kind == "Shop" then
@@ -9270,6 +9295,12 @@ end
 
 function State.myOrigin(): CFrame?
 	return State.originOf(State.plotModel())
+end
+
+-- Read from the plot (always reset when the topple ends) rather than the snapshot.
+function State.myTowerToppling(): boolean
+	local model = State.plotModel()
+	return model ~= nil and model:GetAttribute("Toppling") == true
 end
 
 function State.rootPart(): BasePart?
@@ -9826,7 +9857,7 @@ function Index.refresh(data)
 			local marks = ""
 			for _, m in Mutations.Order do
 				if page[m] then
-					marks ..= (m == "GoldenToast" and "🟡" or m == "Glittery" and "✨" or "🌈")
+					marks ..= (m == "GoldenToast" and "⭐" or m == "Glittery" and "✨" or "🌈")
 				end
 			end
 			card.dots.Text = marks
@@ -10064,7 +10095,7 @@ function Shop.refresh(data)
 	ui.now.Text = "Now: " .. describe(selected, current)
 	if nextLevel then
 		ui.next.Text = "Next: " .. describe(selected, nextLevel)
-		ui.buy.Text = "Upgrade · 🪙" .. Format.number(nextLevel.Cost)
+		ui.buy.Text = "Upgrade · 💰" .. Format.number(nextLevel.Cost)
 		Kit.setButtonEnabled(ui.buy, data.coins >= nextLevel.Cost, Kit.Colors.Green)
 	else
 		ui.next.Text = "Maxed out!"
@@ -10564,7 +10595,7 @@ local function layer(name: string, z: number)
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = z,
-		Parent = Root.gui,
+		Parent = Root.container,
 	})
 end
 
@@ -10575,7 +10606,11 @@ function Root.updateScale()
 	end
 	local size = camera.ViewportSize
 	local base = math.min(size.X / 1280, (size.Y - 58) / 680)
-	Root.scale.Scale = math.clamp(base, 0.5, 1.25) * Root.userScale
+	local s = math.clamp(base, 0.5, 1.25) * Root.userScale
+	-- The container is 1/s of the screen and then scaled by s, so it always
+	-- fills the screen exactly while everything inside is drawn s times bigger.
+	Root.container.Size = UDim2.fromScale(1 / s, 1 / s)
+	Root.scale.Scale = s
 end
 
 function Root.init()
@@ -10587,7 +10622,15 @@ function Root.init()
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		Parent = playerGui,
 	})
-	Root.scale = Kit.new("UIScale", { Parent = Root.gui })
+	Root.container = Kit.new("Frame", {
+		Name = "Scaled",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(1, 1),
+		Parent = Root.gui,
+	})
+	Root.scale = Kit.new("UIScale", { Parent = Root.container })
 	Root.hud = layer("Hud", 1)
 	Root.panels = layer("Panels", 5)
 	Root.overlay = layer("Overlay", 10)

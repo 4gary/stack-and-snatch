@@ -58,7 +58,7 @@ local function onConveyorItem(model: Instance)
 		return
 	end
 	local price = model:GetAttribute("Price") or 0
-	local p = prompt(root, "Buy 🪙" .. Format.number(price), creatureName(model), Config.Conveyor.BuyDistance - 2)
+	local p = prompt(root, "Buy 💰" .. Format.number(price), creatureName(model), Config.Conveyor.BuyDistance - 2)
 	p.Triggered:Connect(function()
 		Remotes.get("BuyConveyor"):FireServer(model:GetAttribute("Uid"))
 	end)
@@ -85,6 +85,7 @@ local function onPegs(pegs: BasePart)
 	local index = pegs:GetAttribute("PlotIndex") or 0
 	local p = prompt(pegs, practice and "Practice Snatch" or "Snatch!", practice and "Sneaky Pete's tower" or "", Config.Snatch.PromptDistance)
 	p.HoldDuration = 0.25
+	p.Exclusivity = Enum.ProximityPromptExclusivity.AlwaysShow
 	p.Triggered:Connect(function()
 		if C.Minigames.isBusy() then
 			return
@@ -181,7 +182,7 @@ local talkIndex = {}
 
 local function onStall(part: BasePart)
 	local action = part:GetAttribute("Action") or ""
-	local p = prompt(part, part:GetAttribute("PromptText") or "Talk", part:GetAttribute("NpcName") or "", 12)
+	local p = prompt(part, part:GetAttribute("PromptText") or "Talk", part:GetAttribute("NpcName") or "", 8)
 	p.Triggered:Connect(function()
 		local kind, arg = string.match(action, "^(%a+):?(%a*)$")
 		if kind == "Shop" then

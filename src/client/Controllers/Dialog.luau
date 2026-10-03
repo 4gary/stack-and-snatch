@@ -81,7 +81,7 @@ local function build()
 		Name = "Dialog",
 		Size = UDim2.fromOffset(420, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
-		Position = UDim2.fromOffset(12, 280),
+		Position = UDim2.fromOffset(12, 290),
 		BackgroundColor3 = Color3.fromRGB(255, 250, 235),
 		Visible = false,
 		Parent = Root.hud,

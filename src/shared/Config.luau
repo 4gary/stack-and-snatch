@@ -60,7 +60,7 @@ Config.Pendulum = {
 	BasePeriod = 2.6,
 	MinPeriod = 1.2,
 	PeriodShrinkPerLayer = 0.03,
-	TimestampTolerance = 0.5, -- how far a reported drop time may be from server time
+	TimestampTolerance = 0.8, -- how far a reported drop time may be from server time
 }
 
 -- Economy ----------------------------------------------------------------------

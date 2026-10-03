@@ -65,13 +65,13 @@ function Protection.statusText(owner)
 	if st.shieldLeft > 0 then
 		return "🛡️ Bubble Shield " .. Format.time(st.shieldLeft), true, "Shield"
 	elseif st.arrival then
-		return "🫧 Arrival Bubble", true, "Arrival"
+		return "💠 Arrival Bubble", true, "Arrival"
 	elseif st.newStacker then
 		return "🌱 New Stacker", true, "NewStacker"
 	elseif st.napping then
 		return "💤 Napping", true, "Nap"
 	elseif st.ruffledLeft > 0 then
-		return "🪶 Ruffled Feathers " .. Format.time(st.ruffledLeft), true, "Ruffled"
+		return "🐤 Ruffled Feathers " .. Format.time(st.ruffledLeft), true, "Ruffled"
 	end
 	return "", false, nil
 end

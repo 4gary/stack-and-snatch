@@ -47,6 +47,12 @@ function State.myOrigin(): CFrame?
 	return State.originOf(State.plotModel())
 end
 
+-- Read from the plot (always reset when the topple ends) rather than the snapshot.
+function State.myTowerToppling(): boolean
+	local model = State.plotModel()
+	return model ~= nil and model:GetAttribute("Toppling") == true
+end
+
 function State.rootPart(): BasePart?
 	local character = State.player.Character
 	return character and character:FindFirstChild("HumanoidRootPart") :: BasePart?

@@ -29,6 +29,7 @@ local ghostKey = nil
 local target: BasePart? = nil
 local active = false
 local lastDrop = 0
+local lastWarn = 0
 
 local function clearGhost()
 	if ghost then
@@ -63,7 +64,7 @@ local function canPlace(data): boolean
 	return data ~= nil
 		and data.held ~= nil
 		and data.carrying == nil
-		and not data.toppling
+		and not C.State.myTowerToppling()
 		and not data.inSession
 		and #data.tower < Economy.maxSlots(data)
 		and State.onOwnPad()
@@ -157,7 +158,10 @@ function Placement.start()
 	RunService.RenderStepped:Connect(function()
 		local ok, err = pcall(update)
 		if not ok then
-			warn("[Placement]", err)
+			if os.clock() - lastWarn > 5 then
+				lastWarn = os.clock()
+				warn("[Placement]", err)
+			end
 			setActive(false)
 		end
 	end)
