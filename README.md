@@ -14,7 +14,7 @@ Design Write-Up* (Oct 2026). Scope: the doc's **MVP**, plus the full
 
 ## Open it in Roblox Studio (quickest)
 
-1. Download **`StackAndSnatch.rbxlx`** from this repo.
+1. Download **`StackAndSnatch.rbxl`** from this repo (or the `.rbxlx` text version - both open the same way).
 2. In Roblox Studio, go to **File → Open from File...** and pick it.
 3. Press **Play** (F5). The island is built when the game starts, so the
    Workspace is empty until you press Play.
@@ -38,6 +38,7 @@ rojo serve
 Then connect from the Rojo plugin in Studio. To rebuild the place file:
 
 ```bash
+rojo build -o StackAndSnatch.rbxl
 rojo build -o StackAndSnatch.rbxlx
 ```
 
@@ -92,7 +93,8 @@ Rain, put a Legendary on the belt, toggle your protections, reset your data.
 
 ```
 default.project.json      Rojo project (what goes where in the place)
-StackAndSnatch.rbxlx      built place file (open this in Studio)
+StackAndSnatch.rbxl       built place file (open this in Studio)
+StackAndSnatch.rbxlx      same place in text (XML) form
 src/shared/               ReplicatedStorage.Shared - used by server and client
   Config.luau             EVERY tunable number (prices, timers, wobble, shields...)
   Creatures.luau          the 24 Stackables (rarity, shape, rate, price, traits)
